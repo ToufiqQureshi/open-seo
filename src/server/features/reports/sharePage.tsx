@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { formatRelativeTime } from "@/client/lib/relative-time";
+import { BrandingService } from "@/server/features/branding/services/BrandingService";
 import { ReportRepository } from "@/server/features/reports/repositories/ReportRepository";
 import {
   SHARE_TOKEN_PATTERN,
@@ -95,10 +96,13 @@ function TryButton() {
 
 function Document({
   title,
+  siteName = "OpenSEO",
   head,
   children,
 }: {
   title: string;
+  /** The white-label brand name when the organization set one. */
+  siteName?: string;
   head?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -111,7 +115,7 @@ function Document({
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
         <meta name="robots" content="noindex, nofollow" />
-        <title>{`${title} · OpenSEO`}</title>
+        <title>{`${title} · ${siteName}`}</title>
         {head}
         <link rel="icon" href="/favicon.ico" />
         <style dangerouslySetInnerHTML={{ __html: STYLES }} />
@@ -188,14 +192,19 @@ export async function renderSharePage(
     domain: domain.success ? domain.data : "",
   });
   const imageUrl = `${canonical}/og.png?${imageVersion}`;
+  // A white-labelled report is the agency's deliverable to its client, so the
+  // page names the agency and drops the product's own call to action.
+  const branding = await BrandingService.getBranding(report.organizationId);
+  const siteName = branding?.brandName ?? "OpenSEO";
 
   return htmlResponse(
     <Document
       title={report.title}
+      siteName={siteName}
       head={
         <>
           <meta property="og:type" content="article" />
-          <meta property="og:site_name" content="OpenSEO" />
+          <meta property="og:site_name" content={siteName} />
           <meta property="og:title" content={report.title} />
           <meta name="twitter:title" content={report.title} />
           {description ? (
@@ -208,11 +217,14 @@ export async function renderSharePage(
           <meta property="og:image" content={imageUrl} />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
-          <meta property="og:image:alt" content={`${report.title} · OpenSEO`} />
+          <meta
+            property="og:image:alt"
+            content={`${report.title} · ${siteName}`}
+          />
           <meta name="twitter:image" content={imageUrl} />
           <meta
             name="twitter:image:alt"
-            content={`${report.title} · OpenSEO`}
+            content={`${report.title} · ${siteName}`}
           />
           <meta name="twitter:card" content="summary_large_image" />
         </>
@@ -222,7 +234,10 @@ export async function renderSharePage(
         <div className="title">
           <h1>{report.title}</h1>
           <p className="meta">
-            Made with OpenSEO · Updated {formatRelativeTime(report.updatedAt)}
+            {branding
+              ? `Prepared by ${branding.brandName}`
+              : "Made with OpenSEO"}{" "}
+            · Updated {formatRelativeTime(report.updatedAt)}
           </p>
         </div>
         <div className="actions">
@@ -244,7 +259,22 @@ export async function renderSharePage(
             </svg>
             <span>Share</span>
           </button>
-          <TryButton />
+          {branding?.websiteUrl ? (
+            <a
+              className="btn primary"
+              href={branding.websiteUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                background: branding.accentColor,
+                borderColor: branding.accentColor,
+              }}
+            >
+              Visit {branding.brandName}
+            </a>
+          ) : branding ? null : (
+            <TryButton />
+          )}
         </div>
       </header>
       <iframe

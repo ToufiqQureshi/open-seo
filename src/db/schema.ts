@@ -3,6 +3,7 @@ import * as sqliteApp from "./app.schema";
 import * as sqliteProjectContext from "./project-context.schema";
 import * as sqliteReports from "./reports.schema";
 import * as sqliteReportTemplates from "./report-templates.schema";
+import * as sqliteBranding from "./branding.schema";
 import * as sqliteAudit from "./audit.schema";
 import * as sqliteSam from "./sam.schema";
 import * as sqliteAuth from "./better-auth-schema";
@@ -14,6 +15,7 @@ import * as pgApp from "./pg/app.schema";
 import * as pgProjectContext from "./pg/project-context.schema";
 import * as pgReports from "./pg/reports.schema";
 import * as pgReportTemplates from "./pg/report-templates.schema";
+import * as pgBranding from "./pg/branding.schema";
 import * as pgAudit from "./pg/audit.schema";
 import * as pgSam from "./pg/sam.schema";
 import * as pgAuth from "./pg/better-auth-schema";
@@ -36,6 +38,7 @@ type AppSchema = typeof sqliteApp &
   typeof sqliteProjectContext &
   typeof sqliteReports &
   typeof sqliteReportTemplates &
+  typeof sqliteBranding &
   typeof sqliteAudit &
   typeof sqliteSam &
   typeof sqliteAuth &
@@ -51,6 +54,7 @@ const runtimeSchema =
         ...pgProjectContext,
         ...pgReports,
         ...pgReportTemplates,
+        ...pgBranding,
         ...pgAudit,
         ...pgSam,
         ...pgAuth,
@@ -64,6 +68,7 @@ const runtimeSchema =
         ...sqliteProjectContext,
         ...sqliteReports,
         ...sqliteReportTemplates,
+        ...sqliteBranding,
         ...sqliteAudit,
         ...sqliteSam,
         ...sqliteAuth,
@@ -88,6 +93,7 @@ export const {
   rankCheckRuns,
   rankSnapshots,
   organizationActivationState,
+  organizationBranding,
   projectActivationState,
   dashboardStepDismissals,
   backlinkSnapshots,

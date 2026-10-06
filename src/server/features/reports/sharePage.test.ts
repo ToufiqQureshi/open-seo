@@ -4,6 +4,7 @@ import { renderSharePage } from "./sharePage";
 import { REPORT_IFRAME_SANDBOX } from "@/shared/report-sandbox";
 
 const mocks = vi.hoisted(() => ({
+  getBranding: vi.fn(),
   env: {
     AUTH_MODE: "hosted" as string | undefined,
   },
@@ -11,6 +12,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("cloudflare:workers", () => ({ env: mocks.env }));
+vi.mock("@/server/features/branding/repositories/BrandingRepository", () => ({
+  BrandingRepository: { getBranding: mocks.getBranding },
+}));
 vi.mock("@/server/features/reports/repositories/ReportRepository", () => ({
   ReportRepository: { getSharedReportByToken: mocks.getSharedReportByToken },
 }));
@@ -29,6 +33,7 @@ const SHARED_REPORT = {
 };
 
 beforeEach(() => {
+  mocks.getBranding.mockResolvedValue(null);
   mocks.env.AUTH_MODE = "hosted";
   mocks.getSharedReportByToken.mockResolvedValue(SHARED_REPORT);
 });
@@ -68,6 +73,25 @@ describe("renderSharePage", () => {
     );
     // No app bundle: the reader has never signed in and needs none of it.
     expect(html).not.toContain("/assets/");
+  });
+
+  it("names the agency instead of OpenSEO when the organization is white-labelled", async () => {
+    mocks.getBranding.mockResolvedValue({
+      brandName: "Acme Digital",
+      accentColor: "#ff0000",
+      logoDataUrl: null,
+      websiteUrl: "https://acme.agency",
+      updatedAt: "2026-10-06T00:00:00.000Z",
+    });
+
+    const html = await (await renderSharePage(TOKEN, request())).text();
+
+    expect(html).toContain(
+      "<title>badseo.dev &lt;SEO&gt; audit · Acme Digital</title>",
+    );
+    expect(html).toContain("Prepared by Acme Digital");
+    expect(html).toContain('href="https://acme.agency"');
+    expect(html).not.toContain("OpenSEO");
   });
 
   // The reader is told the project is archived; the report's own title is

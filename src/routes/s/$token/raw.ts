@@ -1,5 +1,7 @@
 import { waitUntil } from "cloudflare:workers";
 import { createFileRoute } from "@tanstack/react-router";
+import { withBrandBar } from "@/server/features/branding/brandBar";
+import { BrandingService } from "@/server/features/branding/services/BrandingService";
 import { ReportRepository } from "@/server/features/reports/repositories/ReportRepository";
 import {
   SHARE_TOKEN_PATTERN,
@@ -86,10 +88,10 @@ async function handleSharedReportRequest(
   const dest = request.headers.get("Sec-Fetch-Dest");
   if (dest !== null && dest !== "iframe") return bounceTo(sharePath(token));
 
-  const html = await ReportRepository.getReportHtml(
-    report.projectId,
-    report.id,
-  );
+  const [html, branding] = await Promise.all([
+    ReportRepository.getReportHtml(report.projectId, report.id),
+    BrandingService.getBranding(report.organizationId),
+  ]);
   if (html === null) return notShared();
 
   waitUntil(
@@ -112,7 +114,7 @@ async function handleSharedReportRequest(
     })(),
   );
 
-  return reportDocumentResponse(html, {
+  return reportDocumentResponse(withBrandBar(html, branding), {
     cacheControl: EDGE_CACHE_CONTROL,
     noindex: true,
   });

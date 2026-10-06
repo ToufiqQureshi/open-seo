@@ -3,6 +3,7 @@ import { handleReportRequest, NOT_FOUND_BODY } from "@/routes/r/$reportId";
 import { PRINT_SCRIPT, REPORT_CSP, reportCsp } from "@/shared/report-sandbox";
 
 const mocks = vi.hoisted(() => ({
+  getBranding: vi.fn(),
   resolveUserContextFromHeaders: vi.fn(),
   getProjectForOrganization: vi.fn(),
   getArchivedProjectForOrganization: vi.fn(),
@@ -20,6 +21,9 @@ vi.mock("@/server/features/projects/repositories/ProjectRepository", () => ({
     getArchivedProjectForOrganization: mocks.getArchivedProjectForOrganization,
   },
 }));
+vi.mock("@/server/features/branding/repositories/BrandingRepository", () => ({
+  BrandingRepository: { getBranding: mocks.getBranding },
+}));
 vi.mock("@/server/features/reports/repositories/ReportRepository", () => ({
   ReportRepository: {
     getReportProjectId: mocks.getReportProjectId,
@@ -32,6 +36,7 @@ const HTML = "<!doctype html><html><body>report</body></html>";
 const request = () => new Request("https://app.example.com/r/report-1");
 
 beforeEach(() => {
+  mocks.getBranding.mockResolvedValue(null);
   mocks.resolveUserContextFromHeaders.mockResolvedValue({
     userId: "user-1",
     userEmail: "user@example.com",

@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_app/settings")({
 
 // Account-level settings, tabbed like project settings. Personal = the
 // signed-in user (theme, API keys, analytics); Organization = the active org
-// (team). Billing keeps its own page — it's linked from paywalls all over.
+// (team); Branding = white-label for client reports. Billing keeps its own page — it's linked from paywalls all over.
 function SettingsLayout() {
   const tabs = [
     { to: "/settings" as const, label: "Personal", exact: true },
@@ -17,6 +17,7 @@ function SettingsLayout() {
     ...(isHostedClientAuthMode()
       ? [{ to: "/settings/organization" as const, label: "Organization" }]
       : []),
+    { to: "/settings/branding" as const, label: "Branding" },
   ];
 
   return (

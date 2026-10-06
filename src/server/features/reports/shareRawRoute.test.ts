@@ -6,6 +6,7 @@ import {
 import { REPORT_CSP } from "@/shared/report-sandbox";
 
 const mocks = vi.hoisted(() => ({
+  getBranding: vi.fn(),
   env: {
     AUTH_MODE: "hosted" as string | undefined,
   },
@@ -18,6 +19,9 @@ vi.mock("cloudflare:workers", () => ({
   waitUntil: (promise: Promise<unknown>) => void promise,
 }));
 vi.mock("@/server/lib/posthog", () => ({ captureServerEvent: vi.fn() }));
+vi.mock("@/server/features/branding/repositories/BrandingRepository", () => ({
+  BrandingRepository: { getBranding: mocks.getBranding },
+}));
 vi.mock("@/server/features/reports/repositories/ReportRepository", () => ({
   ReportRepository: {
     getSharedReportByToken: mocks.getSharedReportByToken,
@@ -61,6 +65,7 @@ const SHARED_REPORT = {
 };
 
 beforeEach(() => {
+  mocks.getBranding.mockResolvedValue(null);
   mocks.env.AUTH_MODE = "hosted";
   mocks.getSharedReportByToken.mockResolvedValue(SHARED_REPORT);
   mocks.getReportHtml.mockResolvedValue(HTML);

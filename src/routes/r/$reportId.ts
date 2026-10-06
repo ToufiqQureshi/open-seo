@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { isHostedAuthMode } from "@/lib/auth-mode";
 import { resolveUserContextFromHeaders } from "@/middleware/ensure-user/resolve";
 import { ProjectRepository } from "@/server/features/projects/repositories/ProjectRepository";
+import { withBrandBar } from "@/server/features/branding/brandBar";
+import { BrandingService } from "@/server/features/branding/services/BrandingService";
 import { ReportRepository } from "@/server/features/reports/repositories/ReportRepository";
 import { asAppError } from "@/server/lib/errors";
 import { reportDocumentResponse, textResponse } from "@/shared/report-sandbox";
@@ -74,7 +76,10 @@ async function handleReportRequest(
     );
   }
 
-  const html = await ReportRepository.getReportHtml(projectId, reportId);
+  const [html, branding] = await Promise.all([
+    ReportRepository.getReportHtml(projectId, reportId),
+    BrandingService.getBranding(context.organizationId),
+  ]);
   if (html === null) return reportNotFound();
 
   // Print mode. "Export" in the app opens `/r/<id>?print=1`, and the appended
@@ -82,7 +87,7 @@ async function handleReportRequest(
   // the browser's print dialog itself.
   const print = new URL(request.url).searchParams.get("print") === "1";
 
-  return reportDocumentResponse(html, {
+  return reportDocumentResponse(withBrandBar(html, branding), {
     print,
     cacheControl: "private, no-store",
   });
